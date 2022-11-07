@@ -397,3 +397,250 @@ found type `()
 ```
 
 A principal mensagem de erro é: "mismatched types", o que revela o problema principal com esse código. A definição da função `plus_one` diz que ela retornara um `i32`, mas a **declaração (statement)** não resulta em um valor, o que é representado por `expect i32, found ()` o que quer dizer; `Uma tupla vazia`. Portanto, nada é retornado, o que contradiz a definição da função, o que resulta no erro.
+
+## Fluxo de controle de dados (Data flow)
+
+Decidir se devemos ou não executar algum código dependendo se uma condição é verdadeira ou falsa ou decidir executar algum código repetidamente enquanto uma condição está sendo atendida são blocos de construção básicos na maioria das linguagens de programação. A maioria dessas construções que permitem controlar o fluxo de execução do código Rust são expressões `if` e `loops`.
+
+### Expressões if
+
+Uma expressão `if` permite ramificar o nosso código dependendo de condições. Provemos uma condição e um estado, "se a condição for atendida, execute esse bloco de código. Se esse trecho de código não atender a condição não execute esse trecho de código."
+
+um exemplo simples:
+
+```rust
+fn what_the_result() {
+  let number: i32 = 3;
+
+  if number < 5 {
+    println!("A condição é verdadeira.");
+  } else {
+    println!("A condição é falsa.");
+  }
+}
+```
+
+Também vale a pena notar que a condição neste código deve ser um `bool`. Se a condição não for um `bool`, receberemos um erro. Por exemplo, tente executar o seguinte código:
+
+```rust
+fn main () {
+  let number = 3;
+
+  if number {
+    println!("O número é três.");
+  }
+}
+```
+
+Se tentarmos executar, o código retornara um erro:
+
+```bash
+error[E0308]: mismatched types
+--> src/main.rs:4:8
+
+
+if number {
+
+^^^^^^ expected bool, found integral variable
+
+= note: expected type `bool`
+found type `{integer}`
+```
+
+O erro indica que a condição esperava um boolean mas recebeu integer. Diferente de outras linguagens como `Ruby` ou `Javascript`, `Rust` não tenta converter automaticamente um valor não-boolean em boolean. Devemos ser explícitos e sempre fornecer ao `if` um boolean como sua condição. Se quisermos que o bloco de código `if` seja executado somente quando um número não é igual a 0, por exemplo, podemos alterar o `if` para a seguinte expressão:
+
+```rust
+fn main() {
+  let number = 3;
+
+  if number != 0 {
+    println!("O número é diferente de zero.");
+  }
+}
+```
+
+### Múltiplas condições com `else if`
+
+Podemos lidar com múltiplas condições utilizando a combinação de `if`e `else` na expressão `else if`:
+
+```rust
+fn main() {
+ let number = 6;
+ if number % 4 == 0 {
+   println!("number is divisible by 4");
+} else if number % 3 == 0 {
+    println!("number is divisible by 3");
+} else if number % 2 == 0 {
+    println!("number is divisible by 2");
+} else {
+    println!("number is not divisible by 4, 3, or 2");
+}
+}
+```
+
+Quando o programa é executado, ele verifica cada expressão `if` por sua vez e executa o primeiro bloco para o qual a condição é verdadeira. Observe que mesmo `6` sendo divisível por `2`, não vemos que o número de saída é divisível por `2`, nem vemos que o número não é divisível por `4`, `3` ou `2` do bloco de `else`. Isso porque Rust só executa o bloco para a primeira condição verdadeira, e uma vez que encontra uma condição satisfatória, ele nem verifica o resto. Usar muitas expressões `else if` pode desordenar nosso código, então se você tiver mais de um, você pode querer refatorar seu código. Existe uma condição chamada `match` que é ideal para essas situações, veremos ela em breve.
+
+### Utilizando `if` em uma declaração `let`
+
+Como `if` é uma expressão, nós podemos utiliza-la do lado direito da declaração `let`, como no exemplo a seguir:
+
+```rust
+fn main() {
+  let condition = true;
+  let number = if condition {
+    5
+  } else {
+    6
+  };
+
+  println!("O valor de number é: {}", number);
+}
+```
+
+A variável `number` será vinculada a um valor com base no resultado da expressão `if`:
+
+```bash
+$ O valor do número é: 5
+```
+
+Lembre-se de que os blocos de código são avaliados para a última expressão neles, e os números por si só também são expressões. Neste caso, o valor de toda a expressão `if` depende de qual bloco de código é executado. Isso significa que os valores têm o potencial de serem resultados de cada "ramificação" do `if` e deve ser do mesmo tipo; na Listagem 3-2, os resultados do braço if e o outro braço eram i32 inteiros. Se os tipos forem incompatíveis, como no exemplo a seguir, receberemos um erro:
+
+```rust
+fn main() {
+  let condition = true;
+  let number = if condition {
+    5
+} else {
+    "six"
+};
+  println!("The value of number is: {}", number);
+}
+```
+
+O que acontece aqui é a incompatibilidade de tipos:
+
+```bash
+error[E0308]: if and else have incompatible types
+--> src/main.rs:4:18
+|
+ |
+let number = if condition {
+| __________________^
+ | |
+
+ | |
+} else {
+ | |
+"six"
+ | |
+};
+| |_____^ expected integral variable, found &str
+|
+= note: expected type `{integer}`
+found type `&str`
+```
+
+A expressão no bloco `if` é avaliada como um `inteiro`, e a expressão no bloco `else` é avaliada como uma `string`. Isso não funcionará porque as variáveis devem ter um único tipo. Rust precisa saber em **tempo de compilação** qual o tipo da variável `number`, para poder verificar em tempo de compilação que seu tipo é válido em todos os lugares em que usamos a variável `number`. Rust não seria capaz de fazer isso se o tipo de `number` fosse determinado apenas em **tempo de execução**; o compilador seria mais complexo e daria menos garantias sobre o código se tivesse que acompanhar vários tipos hipotéticos para qualquer variável.
+
+### Repetição com Loops
+
+É comum executar um bloco de códigos mais de uma vez, para essa tarefa `Rust` prove vários `loops`. Um `loop` é executado dentro de um bloco de código de repetição até o final e depois volta ao começo imediatamente:
+
+```rust
+fn main () {
+  loop {
+    println!("De novo e de novo... e de nono...");
+  }
+}
+```
+
+Quando executamos esse código ele repete o texto até usarmos o comando `CTRL-C`, que irá interromper a execução. Outra maneira de parar o código é usar a palavra reservada `break`, como no programa de adivinhação de números.
+
+### Retornando valores a partir de `loops`
+
+Um dos usos de `loops` é tentar novamente uma operação que você sabe que pode falhar, como verificar se um `thread` concluiu seu trabalho. No entanto, você pode precisar passar o resultado dessa operação para o resto do seu código, para fazer isso, você pode adicionar o valor que deseja retornar após a expressão `break` que você usa para parar o `loop`; esse valor será retornado fora do `loop` para que você possa usar isso, como mostrado aqui:
+
+```rust
+fn main() {
+    let mut counter = 0;
+
+    let result = loop {
+        counter += 1;
+
+    if counter == 10 {
+        break counter * 2;
+    }
+};
+
+  println!("The result is {}", result);
+}
+```
+
+Antes do `loop`, nós declaramos uma variável chamada `counter` e a inicializamos com `0`, depois disso declaramos outra variável chamada `result` para guardar o valor retornado do `loop`. Para cada iteração do `loop`, nós adicionamos `1` a variável `counter` e utilizamos o `if` para checar se o contador tem seu valor é igual a `10`, quando isso acontece o trecho de código `break counter * 2;` Após o loop, usamos um ponto e vírgula para encerrar o estado (statement) que atribui o valor a `result`. Por fim, imprimimos o valor em `result`, que neste caso é `20`.
+
+### Loops condicionais com `while`
+
+Muitas vezes é útil para m programa avaliar uma condição entro e um `loop`. Enquanto uma condição for verdadeira ela será executada, quando ela deixar de ser verdadeira, o programa executara o `break`. Uma maneira de criarmos loops com condições é utilizarmos o loop `while`:
+
+```rust
+fn main() {
+  let mut number: i32 = 3;
+
+  while number != 0 {
+    println!("{}!", number);
+
+    number = number - 1
+  }
+
+  println("LIFTOFF! (WOW isso significa decolar!)");
+}
+```
+
+Essa implementação elimina muito a necessidade de usarmos `if's, loop's, else's e break's` e acaba sendo mais fácil de entendermos.
+
+### Percorrendo uma coleção utilizando o laço `for`
+
+Podemos utilizar o laço `while` para percorrer os elementos de uma coleção, como de um `array` por exemplo:
+
+```rust
+fn main() {
+  let a [10, 20, 30, 40, 50];
+  let mut index = 0;
+
+  while index < 5 {
+    println!("O valor é: {}", a[index]);
+
+    index = index + 1;
+  }
+}
+```
+
+Todos os cinco valores da matriz aparecem no terminal, conforme esperado. Apesar de índice atingirá um valor de `5` em algum ponto, o loop para de executar antes, tentando buscar um sexto valor da matriz. Mas essa abordagem é propensa a erros; podemos fazer com que o programa entre em `pânico` se o comprimento do índice estiver incorreto. Também é lento, **porque o compilador adiciona código de tempo de execução para realizar a verificação condicional em cada elemento em cada iteração através do loop**. Como uma alternativa mais concisa, você pode usar um `loop for` e executar algum código para cada item em uma coleção:
+
+```rust
+fn main() {
+  let a = [10, 20, 30, 40, 50, 60];
+
+  for element in a.iter() {
+
+     println!("O valor é: {}", element);
+  }
+}
+```
+
+Quando executarmos esse código, veremos a mesma saída do acima. Mais importante, agora aumentamos a segurança do código e eliminamos a chance de bugs que podem resultar de ir além do final do a matriz ou não indo longe o suficiente e faltando alguns itens. Por exemplo, no código de exemplos anteriores, se você removeu um item do `array`, mas esqueceu de atualizar a condição para `while index < 4`, o código entraria em pânico. Usando o `loop for`, você não precisa se lembrar de alterar qualquer outro código se você alterou o número de valores na matriz (array).
+A segurança e a concisão dos `loops for` os tornam os mais comuns em Rust. Mesmo em situações em que você deseja executar algum código um certo número de vezes, como no exemplo de contagem regressiva que usado um `loop while`, a maioria dos `Rustaceans` usaria um `loop for`.
+A maneira de fazer isso seria usar um Range, que é um tipo fornecido pela biblioteca de dados que gera todos os números em sequência a partir de um número e terminando antes de outro número. Podemos fazer uma contagem regressiva utilizando o método `rev` e o laço `loop for`:
+
+```rust
+fn main() {
+  // (1..4) esse Range vai de 1 até 3.
+  for number in (1..4).rev() {
+    println!("{}!", number);
+  }
+
+  println!("LIFTOFF!!!!");
+}
+```
+
+Assim o código fica muito mais elegante =)
